@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ExpandedButton(
-              buttonColor: AppColors.errorColor.withOpacity(1),
+              buttonColor: AppColors.primaryColor.withOpacity(1),
               onPressed: () async {
                 // print('Button Pressed!');
                 await dataHandler.clearAllPreferences();
@@ -155,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const AppText(
                 text: "Wipe Data",
                 fontSize: 18.0,
-                color: AppColors.whiteColor,
+                color: AppColors.blackColor,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

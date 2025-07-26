@@ -5,13 +5,9 @@ import 'package:app_news/utils/helper/data_functions.dart';
 import 'package:app_news/widgets/app_text.dart';
 import 'package:app_news/widgets/news_widget.dart';
 import 'package:flutter/cupertino.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:webfeed_plus/webfeed_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:webfeed_plus/domain/rss_feed.dart';
-
-
 
 class HomeSectionCountry extends StatefulWidget {
   const HomeSectionCountry({super.key});
@@ -21,55 +17,83 @@ class HomeSectionCountry extends StatefulWidget {
 }
 
 class _HomeSectionCountryState extends State<HomeSectionCountry> {
-  DataHandler dataHandler = DataHandler();
-
-  RssFeed? feed;
-
-  String lang = "";
-  String setLang = "";
-
-  String langCode = "";
-  String setLangCode = "";
-
-  String country = "";
-  String setCountry = "";
-
-  String countryCode = "";
-  String setCountryCode = "";
+  final DataHandler _dataHandler = DataHandler();
+  final http.Client _httpClient = http.Client();
+  
+  RssFeed? _feed;
+  bool _isLoading = true;
+  String? _error;
+  
+  String _country = "";
+  String _countryCode = "";
+  String _lang = "";
+  String _langCode = "";
 
   @override
   void initState() {
     super.initState();
-    readData();
-    loadFeed();
+    _initializeData();
   }
 
-  void readData() async {
-    country = await dataHandler.getStringValue(AppConstants.countryName);
-    countryCode = await dataHandler.getStringValue(AppConstants.countryCode);
+  Future<void> _initializeData() async {
+    try {
+      final country = await _dataHandler.getStringValue(AppConstants.countryName);
+      final countryCode = await _dataHandler.getStringValue(AppConstants.countryCode);
+      final lang = await _dataHandler.getStringValue(AppConstants.langName);
+      final langCode = await _dataHandler.getStringValue(AppConstants.langCode);
 
-    lang = await dataHandler.getStringValue(AppConstants.langName);
-    langCode = await dataHandler.getStringValue(AppConstants.langCode);
-
-    setState(() {
-      setCountry = country;
-      setCountryCode = countryCode;
-
-      setLang = lang;
-      setLangCode = langCode;
-    });
-  }
-
-  Future<void> loadFeed() async {
-    var response = await http.get(Uri.parse(
-        "https://news.google.com/rss?ceid=${setCountryCode}:${setLangCode}&hl=${setLang.toLowerCase()}&gl=${setLangCode}"));
-    if (response.statusCode == 200) {
+      if (!mounted) return;
+      
       setState(() {
-        feed = RssFeed.parse(response.body);
+        _country = country;
+        _countryCode = countryCode;
+        _lang = lang;
+        _langCode = langCode;
       });
-    } else {
-      throw Exception('Failed to load RSS feed');
+
+      await _loadFeed();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
+  }
+
+  Future<void> _loadFeed() async {
+    try {
+      setState(() => _isLoading = true);
+      
+      final url = "https://news.google.com/rss?ceid=${_countryCode}:${_langCode}&hl=${_lang.toLowerCase()}&gl=${_countryCode}";
+      final response = await _httpClient
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _feed = RssFeed.parse(response.body);
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load RSS feed: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+      debugPrint('Error loading country feed: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _httpClient.close();
+    super.dispose();
   }
 
   @override
@@ -97,53 +121,73 @@ class _HomeSectionCountryState extends State<HomeSectionCountry> {
             )
           ],
         ),
-        SizedBox(
-          child: feed == null
-              ? const Center(
-                  child: CupertinoActivityIndicator(),
-                )
-              : ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  //  itemCount: feed!.items?.length,
-                  itemCount: 2,
-                  itemBuilder: (context, index) {
-                    var item = feed!.items?[index];
-                    return NewsWidget(
-                        title: item?.title ?? '',
-                        subtitle: "",
-                        publishDate: item?.pubDate?.toString() ?? "",
-                        author: item?.source?.url.toString() ?? "",
-                        link: item?.link?.toString() ?? "");
-                  },
+        _buildContent(),
+        _buildViewMoreButton(),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+    
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text('Error: $_error', style: TextStyle(color: Colors.red)),
+      );
+    }
+    
+    if (_feed == null || _feed!.items == null || _feed!.items!.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text('No articles available'),
+      );
+    }
+    
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: 2,
+      itemBuilder: (context, index) {
+        final item = _feed!.items![index];
+        return NewsWidget(
+          title: item.title ?? '',
+          subtitle: "",
+          publishDate: item.pubDate?.toString() ?? "",
+          author: item.source?.url.toString() ?? "",
+          link: item.link?.toString() ?? "",
+        );
+      },
+    );
+  }
+
+  Widget _buildViewMoreButton() {
+    return Row(
+      children: [
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.all(15.0),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ViewMore(
+                    getURL: "https://news.google.com/rss?ceid=${_countryCode}:${_langCode}&hl=${_langCode.toLowerCase()}&gl=${_countryCode}",
+                    name: "C o u n t r y",
+                  ),
                 ),
-        ),
-        Row(
-          children: [
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => ViewMore(
-                              getURL:
-                                  "https://news.google.com/rss?ceid=${countryCode}:${langCode}&hl=${langCode.toLowerCase()}&gl=${countryCode}",
-                              name: "C o u n t r y",
-                            )),
-                  );
-                },
-                child: const AppText(
-                  text: "View More",
-                  fontSize: 18.0,
-                  color: AppColors.blackColor,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            )
-          ],
+              );
+            },
+            child: const AppText(
+              text: "View More",
+              fontSize: 18.0,
+              color: AppColors.blackColor,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         )
       ],
     );

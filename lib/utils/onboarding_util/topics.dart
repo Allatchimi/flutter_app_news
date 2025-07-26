@@ -9,8 +9,26 @@ class Topics {
   static const health = Topic('Health');
   static const politics = Topic('Politics');
   static const education = Topic('Education');
+
+  // Custom topics
   static const lifestyle = Topic('Lifestyle');
+  static const defaultTopic = Topic('Default');
+  static const latest = Topic('Latest');
+  static const trending = Topic('Trending');
+  static const top = Topic('Top');
+  static const popular = Topic('Popular');
+  static const breaking = Topic('Breaking');
+  static const opinion = Topic('Opinion');
+  static const analysis = Topic('Analysis'); 
+  //Tchad specific topics
+  static const alwihdainfo = Topic('AlwihdaInfo');
+  static const tchadinfos = Topic('TchadInfos');
+  static const tchadactu = Topic('TchadActu');
+  static const lePays = Topic('LePays');
+  static const tchadone = Topic('TchadOne');
+  static const makaila = Topic('Makaila');     
 }
+
 
 class Topic {
   final String value;
@@ -30,5 +48,21 @@ List<Topic> topicList = [
   Topics.health,
   Topics.politics,
   Topics.education,
-  // Topics.lifestyle,
+  Topics.lifestyle,
+  Topics.defaultTopic,
+  Topics.latest,
+  Topics.trending,
+  Topics.top,
+  Topics.popular,
+  Topics.breaking,
+  Topics.opinion,
+  Topics.analysis,  
+  // Tchad specific topics
+  Topics.alwihdainfo,
+  Topics.tchadinfos,
+  Topics.tchadactu,
+  Topics.lePays,
+  Topics.tchadone,
+  Topics.makaila, 
+  
 ];

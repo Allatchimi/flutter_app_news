@@ -20,6 +20,7 @@ dependencies:
   url_launcher: ^6.3.2
   webfeed_plus: ^1.1.2
   webview_flutter: ^4.13.0
+  xml: ^6.5.0
 
 dev_dependencies:
   flutter_test:

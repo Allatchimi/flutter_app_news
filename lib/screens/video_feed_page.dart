@@ -1,4 +1,3 @@
-import 'package:app_news/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class VideoFeedPage extends StatelessWidget {

@@ -1,3 +1,4 @@
+import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/widgets/generic_app_bar.dart';
 import 'package:app_news/widgets/news_widget.dart';
 import 'package:flutter/cupertino.dart';
@@ -57,8 +58,8 @@ Future<void> loadFeed() async {
     return  Scaffold(
   appBar: GenericAppBar(
     title: widget.name,
-    iconColor: Colors.white,
-    backgroundColor: Colors.deepPurple,
+    iconColor: AppColors.blackColor,
+    backgroundColor: AppColors.primaryColor,
     onBackPressed: () {
       // Action personnalisée avant retour
       _confirmExit(context);

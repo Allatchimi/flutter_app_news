@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "436765561014",
+    "project_id": "appnews-8cc17",
+    "storage_bucket": "appnews-8cc17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436765561014:android:5ce578c7d2d838865c5617",
+        "android_client_info": {
+          "package_name": "com.kidamitech.appNews"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRVEQ9LosZUmK4fJrRKF22_9d8M3VuLj4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,6 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DataHandler {
+
+// Methods to save and retrieve various data types using SharedPreferences
   Future<void> setDoubleValue(String key, double value) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setDouble(key, value);
@@ -36,6 +38,22 @@ class DataHandler {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
+
+  // Methods to save and retrieve last item ID needed for notifications
+  Future<void> saveLastItemId(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  Future<String?> getLastItemId(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  }
+
+  Future<void> removeItem(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
+  } 
 }
 
 

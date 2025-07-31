@@ -1,10 +1,19 @@
+import 'package:hive/hive.dart';
 import 'package:webfeed_plus/webfeed_plus.dart';
+part 'article_model.g.dart';
 
+@HiveType(typeId: 3)
 class ArticleModel {
+  @HiveField(0)
   final String title;
+  @HiveField(1)
   final String link;
+  @HiveField(2)
   final String author;
+  @HiveField(3)
   final String publishDate;
+
+  @HiveField(4)
   final String description;
 
   ArticleModel({

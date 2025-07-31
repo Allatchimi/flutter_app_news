@@ -1,5 +1,4 @@
 import 'package:app_news/screens/search_delegate.dart';
-import 'package:app_news/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:app_news/services/search_service.dart';
 

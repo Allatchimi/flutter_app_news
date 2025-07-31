@@ -22,7 +22,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: ListView.builder(
         itemCount: favorites.length,
         itemBuilder: (context, index) {

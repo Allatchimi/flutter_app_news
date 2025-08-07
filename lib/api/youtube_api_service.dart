@@ -5,7 +5,8 @@ import 'package:app_news/models/playlist_model.dart';
 import 'package:app_news/models/video_item.dart';
 
 class YoutubeApiService {
-  static const String _baseUrl = "http://127.0.0.1:8000";
+  //static const String _baseUrl = "http://127.0.0.1:8000";
+  static const String _baseUrl = 'https://backend-apps-news.onrender.com';
   static const Duration _cacheDuration = Duration(hours: 6);
   static const String _cacheBoxName = 'youtube_cache';
 

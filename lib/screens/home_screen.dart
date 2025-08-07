@@ -1,22 +1,19 @@
 import 'dart:async';
-import 'package:app_news/main.dart';
+import 'dart:convert';
 import 'package:app_news/models/notification_item.dart';
 import 'package:app_news/screens/favorites_page.dart';
 import 'package:app_news/screens/home/videos_and_playlists_page.dart';
 import 'package:app_news/screens/home_content.dart';
 import 'package:app_news/screens/main_navigation_screen.dart';
 import 'package:app_news/screens/notifications_page.dart';
-import 'package:app_news/screens/profil_screen.dart';
 import 'package:app_news/screens/profile_page.dart';
 import 'package:app_news/screens/search_page.dart';
+import 'package:app_news/screens/profil_screen.dart';
 import 'package:app_news/services/notification_service.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/helper/notifier.dart';
 import 'package:app_news/widgets/generic_app_bar.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:hive/hive.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,13 +25,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   int _unreadNotificationsCount = 0;
-  late StreamSubscription _notificationSubscription;
+  Timer? _contentCheckTimer;
+  late StreamSubscription<List<NotificationItem>> _notificationsStreamSubscription;
   final NotificationService _notificationService = NotificationService();
 
   final List<Widget> _screens = [
     const HomeContent(),
     const SearchPage(),
-    //const VideoFeedPage(),
     const VideosAndPlaylistsPage(),
     const FavoritesPage(),
     const ProfilePage(),
@@ -43,39 +40,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _initNotifications();
     _setupContentChecker();
-    loadUnreadNotifications();
+    _updateUnreadCount();
+    _notificationService.checkForNewContent();
+
+    // Écoute des changements dans la liste des notifications
+    _notificationsStreamSubscription =
+        _notificationService.notificationsStream.listen((notifications) {
+      final unreadCount = notifications.where((n) => !n.isRead).length;
+      unreadNotificationCount.value = unreadCount;
+      if (mounted) {
+        setState(() {
+          _unreadNotificationsCount = unreadCount;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _notificationSubscription.cancel();
+    _notificationsStreamSubscription.cancel();
     super.dispose();
-  }
-  @override
-  void setState(VoidCallback fn) {
-    loadUnreadNotifications();
-    super.setState(fn);
-  }
-
-  Future<void> _initNotifications() async {
-    await _notificationService.initialize();
-    _updateUnreadCount();
-
-    _notificationSubscription = FirebaseMessaging.onMessage.listen((message) {
-      _updateUnreadCount();
-    });
-
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _handleNotificationTap(message.data);
-    });
-  }
-
-  void _setupContentChecker() {
-    Timer.periodic(const Duration(minutes: 30), (_) {
-      _notificationService.checkForNewContent();
-    });
   }
 
   Future<void> _updateUnreadCount() async {
@@ -85,11 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _handleNotificationTap(Map<String, dynamic> data) {
-    if (data['type'] == 'youtube') {
-      setState(() => _currentIndex = 2); // Naviguer vers l'onglet Vidéos
-    }
-    _updateUnreadCount();
+  void _setupContentChecker() {
+    Timer.periodic(const Duration(minutes: 30), (_) {
+      _notificationService.checkForNewContent();
+    });
   }
 
   void _onTabTapped(int index) {
@@ -106,13 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _updateUnreadCount();
     }
   }
-
-
-  void loadUnreadNotifications() async {
-  final box = await Hive.openBox<NotificationItem>('notifications');
-  final unreadCount = box.values.where((n) => !n.isRead).length;
-  unreadNotificationCount.value = unreadCount;
-}
 
   @override
   Widget build(BuildContext context) {
@@ -142,79 +119,78 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_currentIndex != 4)
           IconButton(
             icon: const Icon(Icons.person),
-            //onPressed: () => _onTabTapped(4),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             ),
           ),
-        // Dans home_screen.dart ou main.dart
         ElevatedButton(
           onPressed: () async {
-            final id = await NotificationService().saveLocalNotification(
-              title: 'Titre test article',
-              body: 'Ceci est une notification locale de test',
-              type: 'video',
-              link: 'https://example.com/article',
-            );
-
-            final payload =
-                '{"id":"$id","type":"article","link":"https://example.com/article"}';
-
-            await flutterLocalNotificationsPlugin.show(
-              0,
-              'Nouvelle Notification Locale',
-              'Ceci est une notification locale de test locale',
-              NotificationDetails(
-                android: AndroidNotificationDetails(
-                  'test_channel',
-                  'Test Channel',
-                  importance: Importance.high,
-                  priority: Priority.high,
-                ),
-                iOS: const DarwinNotificationDetails(),
-              ),
-              payload: payload,
-            );
+            try {
+              final service = NotificationService();
+              final id = DateTime.now().millisecondsSinceEpoch % 2147483647;
+              // 👇 Création d’un NotificationItem
+              final item = NotificationItem(
+                id: id.toString(),
+                title: 'Test YouTube Video',
+                body: 'Nouvelle vidéo disponible en test',
+                payload: jsonEncode({'url': 'https://www.youtube.com/watch?v=Oqwz8f-haIM', 'type': 'youtube'}),
+                date: DateTime.now(),
+                isRead: false,
+                type: 'youtube',
+                link: 'https://www.youtube.com/watch?v=Oqwz8f-haIM',
+              );
+              await service.saveLocalNotification(
+              item
+              );
+              await service.showTestNotification(
+                id: id,
+                title: 'Test YouTube',
+                body: 'Nouvelle vidéo de test disponible dans show test',
+                type: 'youtube',
+                link: 'https://www.youtube.com/watch?v=Oqwz8f-haIM',
+              );
+              debugPrint('✅ Notification test affichée');
+            } catch (e) {
+              debugPrint('❌ Erreur test notification: $e');
+            }
           },
-
-          child: Text('Test Notif Locale'),
+          child: const Text('Tester Notification YouTube'),
         ),
       ],
     );
   }
 
-
-Widget _buildNotificationIcon() {
-  return ValueListenableBuilder<int>(
-    valueListenable: unreadNotificationCount,
-    builder: (context, count, _) {
-      return Stack(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: _showNotificationsPage,
-          ),
-          if (count > 0)
-            Positioned(
-              right: 8,
-              top: 8,
-              child: IgnorePointer(
-                child: CircleAvatar(
-                  radius: 10,
-                  backgroundColor: Colors.red,
-                  child: Text(
-                    count.toString(),
-                    style: const TextStyle(fontSize: 10, color: Colors.white),
+  Widget _buildNotificationIcon() {
+    return ValueListenableBuilder<int>(
+      valueListenable: unreadNotificationCount,
+      builder: (context, count, _) {
+        return Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications),
+              onPressed: _showNotificationsPage,
+            ),
+            if (count > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: IgnorePointer(
+                  child: CircleAvatar(
+                    radius: 10,
+                    backgroundColor: Colors.red,
+                    child: Text(
+                      count.toString(),
+                      style: const TextStyle(fontSize: 10, color: Colors.white),
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
-      );
-    },
-  );
-}
+          ],
+        );
+      },
+    );
+  }
 
   String _getTitle() {
     const titles = ['Accueil', 'Recherche', 'Vidéos', 'Favoris', 'Profil'];

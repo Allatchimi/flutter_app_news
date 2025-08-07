@@ -13,7 +13,7 @@ class HiveBoxes {
   static const String articles = 'articles';
   
   static Future<void> init() async {
-
+   
      // Enregistrement des adaptateurs
     Hive.registerAdapter(FavoriteArticleAdapter());
     Hive.registerAdapter(NotificationItemAdapter());

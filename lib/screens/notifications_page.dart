@@ -1,12 +1,8 @@
-import 'package:app_news/models/notification_item.dart';
 import 'package:app_news/utils/app_colors.dart';
-import 'package:app_news/utils/helper/notifier.dart';
-import 'package:app_news/widgets/NotificationWidget.dart';
-import 'package:app_news/widgets/news_webview.dart';
-import 'package:app_news/widgets/youtube_player_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:app_news/models/notification_item.dart';
+import 'package:app_news/services/notification_service.dart';
+import 'package:app_news/widgets/news_webview.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -16,127 +12,123 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  late Box<NotificationItem> _notificationsBox;
-  List<NotificationItem> _notifications = [];
-  int _unreadCount = 0;
+  late Future<List<NotificationItem>> _notificationsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    _notificationsFuture = NotificationService().getAllNotifications();
   }
 
-  Future<void> _loadNotifications() async {
-    _notificationsBox = await Hive.openBox<NotificationItem>('notifications');
-    final all = _notificationsBox.values.toList().reversed.toList();
+  void _markAsReadAndNavigate(NotificationItem notification) async {
+    await NotificationService().markNotificationAsRead(notification.id);
+    if (notification.link != null && notification.link!.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NewsWebviewApp(newsURL: notification.link!),
+        ),
+      );
+    }
+  }
+
+  void _deleteNotification(String id) async {
+    await NotificationService().deleteNotification(id);
     setState(() {
-      _notifications = all;
+      _notificationsFuture = NotificationService().getAllNotifications();
     });
-    // Met à jour le compteur global
-    final count = all.where((n) => !n.isRead).length;
-    unreadNotificationCount.value = count;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Notification supprimée')),
+    );
   }
 
-  Future<void> _clearAllNotifications() async {
-    await _notificationsBox.clear();
-    setState(() => _notifications.clear());
+  void _markAllAsRead() async {
+    await NotificationService().markAllAsRead();
+    setState(() {
+      _notificationsFuture = NotificationService().getAllNotifications();
+    });
+  }
+
+  void _clearAll() async {
+    await NotificationService().clearAllNotifications();
+    setState(() {
+      _notificationsFuture = NotificationService().getAllNotifications();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: const Text("Notifications"),
         backgroundColor: AppColors.primaryColor,
-        title: const Text('Notifications'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _clearAllNotifications,
+            icon: const Icon(Icons.mark_email_read),
+            tooltip: "Tout marquer comme lu",
+            onPressed: _markAllAsRead,
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: "Tout supprimer",
+            onPressed: _clearAll,
           ),
         ],
       ),
-      body: _notifications.isEmpty
-          ? const Center(child: Text('Aucune notification'))
-          : ListView.builder(
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return Dismissible(
-                  key: Key(notification.id),
-                  onDismissed: (direction) async {
-                    await _notificationsBox.deleteAt(index);
-                    setState(() => _notifications.removeAt(index));
-                  },
-                  background: Container(color: Colors.red),
-                  child: InkWell(
-                    onTap: () => _handleNotificationTap(notification),
-                    child: NotificationWidget(notification: notification),
+      body: FutureBuilder<List<NotificationItem>>(
+        future: _notificationsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("Aucune notification disponible."));
+          }
+
+          final notifications = snapshot.data!;
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(8),
+            itemCount: notifications.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (context, index) {
+              final notif = notifications[index];
+
+              return ListTile(
+                tileColor: notif.isRead ? null : Colors.blue.withOpacity(0.05),
+                leading: Icon(
+                  notif.type == 'youtube'
+                      ? Icons.ondemand_video
+                      : notif.type == 'article'
+                          ? Icons.article
+                          : Icons.notifications,
+                  color: notif.isRead ? Colors.grey : Colors.red,
+                ),
+                title: Text(
+                  notif.title,
+                  style: TextStyle(
+                    fontWeight: notif.isRead ? FontWeight.normal : FontWeight.bold,
                   ),
-                );
-              },
-            ),
-    );
-  }
-
-  void _handleNotificationTap(NotificationItem notification) async {
-    if (!notification.isRead) {
-      notification.isRead = true;
-      await notification.save(); // ← Sauvegarder dans Hive
-
-      unreadNotificationCount.value = unreadNotificationCount.value - 1;
-
-      // Mettre à jour le compteur
-      final unreadCount = _notificationsBox.values
-          .where((n) => !n.isRead)
-          .length;
-      unreadNotificationCount.value = unreadCount;
-      // setState(() {}); // Pour rafraîchir la UI
-    }
-
-    final link = notification.link;
-    final type = notification.type;
-
-    if (link != null && Uri.tryParse(link)?.hasAbsolutePath == true) {
-      if (type == 'video') {
-        final videoId = YoutubePlayer.convertUrlToId(link);
-        if (videoId != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => YoutubePlayerScreen(videoId: videoId),
-            ),
+                ),
+                subtitle: Text(notif.body),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!notif.isRead)
+                      const Icon(Icons.circle, size: 8, color: Colors.red),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                      onPressed: () => _deleteNotification(notif.id),
+                      tooltip: "Supprimer",
+                    ),
+                  ],
+                ),
+                onTap: () => _markAsReadAndNavigate(notif),
+              );
+            },
           );
-        } else {
-          _showNotificationDialog(notification);
-        }
-      } else if (type == 'article') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => NewsWebviewApp(newsURL: link)),
-        );
-      } else {
-        _showNotificationDialog(notification);
-      }
-    } else {
-      _showNotificationDialog(notification);
-    }
-
-    // 🔔 Optionnel : notifier une autre partie de l'app (ex. compteur badge)
-    // NotificationService.updateBadgeCount(); ← à définir
-  }
-
-  void _showNotificationDialog(NotificationItem notification) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(notification.title),
-        content: Text(notification.body),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+        },
       ),
     );
   }

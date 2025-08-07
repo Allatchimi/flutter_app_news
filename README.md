@@ -29,7 +29,7 @@ Une application Flutter qui affiche des actualités en temps réel, gère les no
 ## 🧑‍💻 Installation
 
 ```bash
-git clone https://github.com/ton-utilisateur/app_news.git
+git clone https://github.com/allatchimi/app_news.git
 cd app_news
 flutter pub get
 flutter run

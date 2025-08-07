@@ -1,9 +1,9 @@
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/onboarding_util/topics.dart';
 import 'package:app_news/widgets/capsule_widget.dart';
-import 'package:app_news/widgets/sub_widgets/home_section_country.dart';
-import 'package:app_news/widgets/sub_widgets/home_section_geo.dart';
-import 'package:app_news/widgets/sub_widgets/home_section_tab.dart';
+import 'package:app_news/screens/home/sub_widgets/home_section_country.dart';
+import 'package:app_news/screens/home/sub_widgets/home_section_geo.dart';
+import 'package:app_news/screens/home/sub_widgets/home_section_tab.dart';
 import 'package:flutter/material.dart';
 
 class HomeContent extends StatefulWidget {

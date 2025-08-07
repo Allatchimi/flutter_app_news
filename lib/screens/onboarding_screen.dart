@@ -1,4 +1,4 @@
-import 'package:app_news/screens/home_screen.dart';
+import 'package:app_news/screens/home/home_screen.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/app_constants.dart';
 import 'package:app_news/utils/helper/data_functions.dart';

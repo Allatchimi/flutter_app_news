@@ -61,7 +61,7 @@ class NotificationWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  notification.date ?? '',
+                  notification.date as String ,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
                 const Spacer(),

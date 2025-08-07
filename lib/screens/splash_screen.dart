@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app_news/screens/home_screen.dart';
+import 'package:app_news/screens/home/home_screen.dart';
 import 'package:app_news/screens/onboarding_screen.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/app_constants.dart';

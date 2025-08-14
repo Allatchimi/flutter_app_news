@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:app_news/screens/notifications_page.dart';
+import 'package:app_news/screens/notification/notifications_page.dart';
 import 'package:app_news/screens/splash_screen.dart';
 import 'package:app_news/services/notification_service.dart';
 import 'package:app_news/utils/helper/hive_box.dart';

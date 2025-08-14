@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:app_news/models/notification_item.dart';
-import 'package:app_news/screens/favorites_page.dart';
-import 'package:app_news/screens/videos_and_playlists_page.dart';
+import 'package:app_news/screens/favorite/favorites_page.dart';
+import 'package:app_news/screens/profil/settings_screen.dart';
+import 'package:app_news/screens/video/videos_and_playlists_page.dart';
 import 'package:app_news/screens/home/home_content.dart';
 import 'package:app_news/screens/main_navigation_screen.dart';
-import 'package:app_news/screens/notifications_page.dart';
-import 'package:app_news/screens/profile_page.dart';
-import 'package:app_news/screens/search_page.dart';
-import 'package:app_news/screens/profil_screen.dart';
+import 'package:app_news/screens/notification/notifications_page.dart';
+import 'package:app_news/screens/profil/profile_page.dart';
+import 'package:app_news/screens/search/search_page.dart';
+import 'package:app_news/screens/profil/profil_screen.dart';
 import 'package:app_news/services/notification_service.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/helper/notifier.dart';
@@ -124,39 +125,14 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             ),
           ),
-        ElevatedButton(
-          onPressed: () async {
-            try {
-              final service = NotificationService();
-              final id = DateTime.now().millisecondsSinceEpoch % 2147483647;
-              // 👇 Création d’un NotificationItem
-              final item = NotificationItem(
-                id: id.toString(),
-                title: 'Test YouTube Video',
-                body: 'Nouvelle vidéo disponible en test',
-                payload: jsonEncode({'url': 'https://www.youtube.com/watch?v=Oqwz8f-haIM', 'type': 'youtube'}),
-                date: DateTime.now(),
-                isRead: false,
-                type: 'youtube',
-                link: 'https://www.youtube.com/watch?v=Oqwz8f-haIM',
-              );
-              await service.saveLocalNotification(
-              item
-              );
-              await service.showTestNotification(
-                id: id,
-                title: 'Test YouTube',
-                body: 'Nouvelle vidéo de test disponible dans show test',
-                type: 'youtube',
-                link: 'https://www.youtube.com/watch?v=Oqwz8f-haIM',
-              );
-              debugPrint('✅ Notification test affichée');
-            } catch (e) {
-              debugPrint('❌ Erreur test notification: $e');
-            }
-          },
-          child: const Text('Tester Notification YouTube'),
-        ),
+        if(_currentIndex == 4)
+        IconButton(
+          onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            ), 
+          icon: const Icon(Icons.settings),
+          )
       ],
     );
   }

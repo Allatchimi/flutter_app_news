@@ -1,3 +1,4 @@
+
 import 'package:app_news/screens/view_more_screen.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/widgets/app_text.dart';

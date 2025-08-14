@@ -1,4 +1,4 @@
-import 'package:app_news/screens/playlist_videos_page.dart';
+import 'package:app_news/screens/video/playlist_videos_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app_news/api/youtube_api_service.dart';
 import 'package:app_news/models/playlist_model.dart';
@@ -53,9 +53,7 @@ class _VideosAndPlaylistsPageState extends State<VideosAndPlaylistsPage> {
     }
   }
 
-  Widget 
-  _buildVideoSection(List<VideoItem> videos) {
-   
+  Widget _buildVideoSection(List<VideoItem> videos) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

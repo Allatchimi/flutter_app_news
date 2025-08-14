@@ -1,4 +1,4 @@
-import 'package:app_news/screens/profil_screen.dart';
+import 'package:app_news/screens/profil/profil_screen.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/widgets/app_text.dart';
 import 'package:flutter/material.dart';

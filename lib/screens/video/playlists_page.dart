@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_news/api/youtube_api_service.dart';
 import 'package:app_news/models/playlist_model.dart';
-import 'package:app_news/screens/playlist_videos_page.dart';
+import 'package:app_news/screens/video/playlist_videos_page.dart';
 import 'package:app_news/widgets/playlist_tile.dart';
 import 'package:hive/hive.dart';
 

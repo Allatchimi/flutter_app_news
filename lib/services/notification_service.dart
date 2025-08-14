@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:app_news/main.dart';
-import 'package:app_news/screens/notifications_page.dart';
+import 'package:app_news/screens/notification/notifications_page.dart';
 import 'package:app_news/utils/helper/hive_box.dart';
 import 'package:app_news/utils/onboarding_util/topic_urls.dart';
 import 'package:app_news/widgets/news_webview.dart';

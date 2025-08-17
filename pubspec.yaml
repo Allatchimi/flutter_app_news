@@ -16,6 +16,7 @@ dependencies:
   firebase_messaging: ^16.0.0
   flutter:
     sdk: flutter
+  flutter_html: ^3.0.0
   flutter_inappwebview: ^6.1.5
   flutter_launcher_icons: ^0.14.4
   flutter_local_notifications: ^19.4.0
@@ -25,6 +26,7 @@ dependencies:
   http: ^1.4.0
   intl: ^0.19.0
   path_provider: ^2.1.5
+  share_plus: ^11.1.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
   webfeed_plus: ^1.1.2

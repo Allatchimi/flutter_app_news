@@ -1,13 +1,9 @@
-import 'package:app_news/screens/view_more_screen.dart';
-import 'package:app_news/utils/app_colors.dart';
-import 'package:app_news/utils/app_constants.dart';
-import 'package:app_news/utils/helper/data_functions.dart';
-import 'package:app_news/widgets/app_text.dart';
-import 'package:app_news/widgets/news_widget.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
-import 'package:webfeed_plus/webfeed_plus.dart';
+import 'package:app_news/screens/home/widgets/home_screen_widgets.dart';
+import 'package:app_news/services/home_service.dart';
+import 'package:app_news/utils/handleException.dart';
+import 'package:app_news/utils/helper/topic_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:webfeed_plus/webfeed_plus.dart';
 
 class HomeSectionCountry extends StatefulWidget {
   const HomeSectionCountry({super.key});
@@ -17,82 +13,53 @@ class HomeSectionCountry extends StatefulWidget {
 }
 
 class _HomeSectionCountryState extends State<HomeSectionCountry> {
-  final DataHandler _dataHandler = DataHandler();
-  final http.Client _httpClient = http.Client();
+  final HomeService _homeService = HomeService();
+  final String url = "https://www.alwihdainfo.com/xml/syndication.rss";
   
   RssFeed? _feed;
   bool _isLoading = true;
   String? _error;
-  
-  String _country = "";
-  String _countryCode = "";
-  String _lang = "";
-  String _langCode = "";
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeData();
-  }
-
-  Future<void> _initializeData() async {
-    try {
-      final country = await _dataHandler.getStringValue(AppConstants.countryName);
-      final countryCode = await _dataHandler.getStringValue(AppConstants.countryCode);
-      final lang = await _dataHandler.getStringValue(AppConstants.langName);
-      final langCode = await _dataHandler.getStringValue(AppConstants.langCode);
-
-      if (!mounted) return;
-      
-      setState(() {
-        _country = country;
-        _countryCode = countryCode;
-        _lang = lang;
-        _langCode = langCode;
-      });
-
-      await _loadFeed();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+    _loadFeed();
   }
 
   Future<void> _loadFeed() async {
+    if (_isDisposed) return;
+
+    setState(() => _isLoading = true);
+
     try {
-      setState(() => _isLoading = true);
+      final feed = await _homeService.fetchFeed(url);
       
-      final url = "https://news.google.com/rss?ceid=${_countryCode}:${_langCode}&hl=${_lang.toLowerCase()}&gl=${_countryCode}";
-      final response = await _httpClient
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 15));
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _feed = RssFeed.parse(response.body);
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load RSS feed: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (!mounted) return;
+      if (_isDisposed || !mounted) return;
+      
       setState(() {
-        _error = e.toString();
+        _feed = feed;
+        _isLoading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (_isDisposed || !mounted) return;
+      
+      setState(() {
+        _error = e is NetworkException 
+               ? e.toString()
+               : 'Erreur de chargement des articles';
         _isLoading = false;
       });
-      debugPrint('Error loading country feed: $e');
+      
+      debugPrint('Erreur de chargement RSS: ${e.toString()}');
     }
   }
 
   @override
   void dispose() {
-    _httpClient.close();
+    _isDisposed = true;
+    _homeService.dispose();
     super.dispose();
   }
 
@@ -100,95 +67,19 @@ class _HomeSectionCountryState extends State<HomeSectionCountry> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(15.0),
-              child: AppText(
-                text: "C o u n t r y",
-                fontSize: 18.0,
-                color: AppColors.blackColor,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: Icon(
-                Icons.list,
-                color: AppColors.blackColor.withOpacity(0.2),
-              ),
-            )
-          ],
+        const SectionHeader1(title: "A L W I H I D A  NEWS"),
+        HomeSectionContent(
+          isLoading: _isLoading,
+          error: _error,
+          feed: _feed,
+          onRetry: _loadFeed,
+          itemCount: 2,
         ),
-        _buildContent(),
-        _buildViewMoreButton(),
-      ],
-    );
-  }
-
-  Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(child: CupertinoActivityIndicator());
-    }
-    
-    if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text('Error: $_error', style: TextStyle(color: Colors.red)),
-      );
-    }
-    
-    if (_feed == null || _feed!.items == null || _feed!.items!.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text('No articles available'),
-      );
-    }
-    
-    return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: 2,
-      itemBuilder: (context, index) {
-        final item = _feed!.items![index];
-        return NewsWidget(
-          title: item.title ?? '',
-          subtitle: "",
-          publishDate: item.pubDate?.toString() ?? "",
-          author: item.source?.url.toString() ?? "",
-          link: item.link?.toString() ?? "",
-        );
-      },
-    );
-  }
-
-  Widget _buildViewMoreButton() {
-    return Row(
-      children: [
-        const Spacer(),
-        Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ViewMore(
-                    getURL: "https://news.google.com/rss?ceid=${_countryCode}:${_langCode}&hl=${_langCode.toLowerCase()}&gl=${_countryCode}",
-                    name: "C o u n t r y",
-                  ),
-                ),
-              );
-            },
-            child: const AppText(
-              text: "View More",
-              fontSize: 18.0,
-              color: AppColors.blackColor,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        )
+        ViewMoreButton(
+          topicUrl: url,
+          convertToSpaces: convertToSpaces,
+          topic: "A L W I H I D A  NEWS",
+        ),
       ],
     );
   }

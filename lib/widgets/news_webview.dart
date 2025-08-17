@@ -36,7 +36,7 @@ class _NewsWebviewAppState extends State<NewsWebviewApp> {
         },
         ),
         title: const AppText(
-          text: "H I G H L I G H T S",
+          text: "Les détails de l'article",
           fontSize: 18.0,
           color: AppColors.blackColor,
           overflow: TextOverflow.ellipsis,

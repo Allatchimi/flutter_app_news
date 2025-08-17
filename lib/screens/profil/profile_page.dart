@@ -1,42 +1,63 @@
-
+import 'package:app_news/screens/profil/settings/settings_page.dart';
+import 'package:app_news/screens/profil/widgets/profile_avatar.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatelessWidget {
-  
-  final String userName = "Amine Kellan";
-  final String email = "amine@example.com";
-  final String profileImageUrl = "https://via.placeholder.com/150"; // Remplace par une vraie URL
-
-
-  const ProfilePage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: NetworkImage(profileImageUrl),
+      appBar: AppBar(title: Text('Profil')),
+      body: Column(
+        children: [
+          //UserHeader(), // Photo + infos basiques
+          const ProfileAvatar(imageUrl: 'https://i.pravatar.cc/150?img=3'),
+          const SizedBox(height: 16),
+          const SizedBox(height: 16),
+          const Text(
+            "Amine Kellan",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "amine.kellan@example.com",
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text("Modifier le profil"),
+            onTap: () {
+              // Ajouter la logique pour éditer le profil
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text("Changer mot de passe"),
+            onTap: () {
+              // Ajouter la logique pour changer le mot de passe
+            },
+          ),
+          ListTile(
+            title: Text('Mon Profil'),
+            leading: Icon(Icons.person),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfilePage()),
             ),
-            SizedBox(height: 16),
-            Text(userName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 4),
-            Text(email, style: TextStyle(color: Colors.grey[600])),
-            SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Redirige vers l'édition du profil
-              },
-              icon: Icon(Icons.edit),
-              label: Text("Modifier le profil"),
+          ),
+          SizedBox(height: 10),
+          ListTile(
+            title: Text('Paramètres'),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
             ),
-            Spacer(),
-            Text("Membre depuis : août 2025", style: TextStyle(color: Colors.grey)),
-          ],
-        ),
+          ),
+
+          // Autres options de profil...
+        ],
       ),
     );
   }

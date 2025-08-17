@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/video_item.dart';
+import '../../../models/video_item.dart';
 
 class VideoTile extends StatelessWidget {
   final VideoItem video;

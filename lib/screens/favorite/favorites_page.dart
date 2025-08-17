@@ -1,6 +1,6 @@
 import 'package:app_news/models/favorite_article.dart';
 import 'package:app_news/services/favorite_service.dart';
-import 'package:app_news/widgets/news_widget.dart';
+import 'package:app_news/screens/article/widgets/news_widget.dart';
 import 'package:flutter/material.dart';
 
 class FavoritesPage extends StatefulWidget {

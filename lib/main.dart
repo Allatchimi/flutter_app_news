@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:app_news/screens/notification/notifications_page.dart';
-import 'package:app_news/screens/splash_screen.dart';
+import 'package:app_news/screens/common/splash_screen.dart';
 import 'package:app_news/services/notification_service.dart';
 import 'package:app_news/utils/helper/hive_box.dart';
 import 'package:firebase_core/firebase_core.dart';

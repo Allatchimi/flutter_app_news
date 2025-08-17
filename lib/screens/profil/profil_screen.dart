@@ -1,14 +1,11 @@
-import 'package:app_news/screens/splash_screen.dart';
+import 'package:app_news/screens/common/splash_screen.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/app_constants.dart';
 import 'package:app_news/utils/helper/data_functions.dart';
 import 'package:app_news/widgets/app_text.dart';
 import 'package:app_news/widgets/expanded_button.dart';
-import 'package:app_news/widgets/profil_card_widget.dart';
+import 'package:app_news/screens/profil/widgets/profil_card_widget.dart';
 import 'package:flutter/material.dart';
-
-
-
 
 
 class ProfileScreen extends StatefulWidget {

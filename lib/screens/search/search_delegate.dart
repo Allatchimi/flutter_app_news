@@ -1,4 +1,4 @@
-import 'package:app_news/widgets/news_widget.dart';
+import 'package:app_news/screens/article/widgets/news_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:app_news/models/article_model.dart';
 import 'package:app_news/services/search_service.dart';

@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:app_news/services/article_service.dart';
-import 'package:app_news/widgets/news_widget.dart';
+import 'package:app_news/screens/article/widgets/news_widget.dart';
 import 'package:app_news/widgets/app_text.dart';
 import 'package:app_news/utils/app_colors.dart';
-import 'package:app_news/screens/view_more_screen.dart';
+import 'package:app_news/screens/common/view_more_screen.dart';
 import 'package:webfeed_plus/webfeed_plus.dart';
 
 class HomeArticleSection extends StatefulWidget {

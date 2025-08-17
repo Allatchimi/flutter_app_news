@@ -1,11 +1,11 @@
 // lib/widgets/rss_section_widget.dart
-import 'package:app_news/screens/view_more_screen.dart';
+import 'package:app_news/screens/common/view_more_screen.dart';
 import 'package:app_news/services/article_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:webfeed_plus/webfeed_plus.dart';
 import 'app_text.dart';
-import 'news_widget.dart';
+import '../screens/article/widgets/news_widget.dart';
 
 class RssSectionWidget extends StatefulWidget {
   final String title;

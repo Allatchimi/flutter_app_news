@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/video_item.dart';
 import '../../services/video_service.dart';
-import '../../widgets/video_tile.dart';
+import 'widgets/video_tile.dart';
 import '../../widgets/youtube_player_flutter.dart';
 
 class VideoFeedPage extends StatefulWidget {

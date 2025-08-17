@@ -15,7 +15,7 @@ class HomeContent extends StatefulWidget {
 
 class _HomeContentState extends State<HomeContent> {
   int _selectedItemIndex = 0;
-  String _tabName = "World";
+  String _tabName = "ManaraTv";
 
   void _onTabChanged(String newTab) {
     setState(() => _tabName = newTab);

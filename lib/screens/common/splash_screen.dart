@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:app_news/screens/home/home_screen.dart';
-import 'package:app_news/screens/onboarding_screen.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/app_constants.dart';
 import 'package:app_news/utils/helper/data_functions.dart';
@@ -40,9 +39,9 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => setdoneOnboarding == "true"
-              ? HomeScreen()
-              : const OnboardingScreen(),
+          builder: (context) => 
+              HomeScreen()
+    
         ),
       );
     });
@@ -57,7 +56,12 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Welcome to TCHAD NEWS",
+              "Welcome to",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            Text(
+              "LABARA TCHADWA NEWS",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 100),

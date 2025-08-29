@@ -103,9 +103,9 @@ dependencies:
 
 * 🔍 Recherche d'articles
 
-* 🗂️ Catégorisation des actualités par thème
+* 🗂️ Catégorisation des actualités par Site
 
-* 👤 Authentification utilisateur
+* 👤 Suggestion de par popularité 
 
 * 📥 Téléchargement d'articles hors ligne
 

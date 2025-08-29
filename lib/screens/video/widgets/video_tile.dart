@@ -110,6 +110,7 @@ class VideoTile extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               // Contenu texte
+              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

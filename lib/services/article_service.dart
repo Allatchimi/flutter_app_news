@@ -33,7 +33,8 @@ class ArticleService {
         if (attempt >= retries) throw e;
         await _exponentialBackoff(attempt);
       } on ApiException catch (e) {
-        if (attempt >= retries || (e.statusCode != null && e.statusCode! >= 500)) {
+        if (attempt >= retries ||
+            (e.statusCode != null && e.statusCode! >= 500)) {
           throw e;
         }
         await Future.delayed(const Duration(seconds: 1));
@@ -53,10 +54,9 @@ class ArticleService {
       await _checkConnectivity();
       final response = await _makeHttpRequest(url);
       final feed = _parseResponse(url, response);
-     
-      
+
       await _enrichFeedItems(feed);
-      
+
       return feed;
     } on http.ClientException {
       throw NetworkException('Erreur réseau');
@@ -89,7 +89,9 @@ class ArticleService {
   Future<String> fetchCleanContent(String url) async {
     final response = await _client.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      throw Exception('Impossible de charger l\'article: ${response.statusCode}');
+      throw Exception(
+        'Impossible de charger l\'article: ${response.statusCode}',
+      );
     }
 
     final document = htmlParser.parse(response.body);
@@ -126,9 +128,18 @@ class ArticleService {
     if (content == null) return '<p>Contenu indisponible</p>';
 
     final unwantedSelectors = [
-      '.ads', '.banner', '.advertisement', '.sponsored',
-      '.social-share', '.comments', '.related-posts',
-      'iframe', 'script', 'nav', 'footer', 'header'
+      '.ads',
+      '.banner',
+      '.advertisement',
+      '.sponsored',
+      '.social-share',
+      '.comments',
+      '.related-posts',
+      'iframe',
+      'script',
+      'nav',
+      'footer',
+      'header',
     ];
 
     for (final selector in unwantedSelectors) {
@@ -151,12 +162,34 @@ class ArticleService {
   }
 
   Future<http.Response> _makeHttpRequest(String url) async {
-    return await _client.get(Uri.parse(url)).timeout(
-      _timeout,
-      onTimeout: () {
-        throw TimeoutException('Request timed out');
-      },
+    final headers = {
+      'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+      'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+    };
+
+    final response = await _client
+        .get(Uri.parse(url), headers: headers)
+        .timeout(
+          _timeout,
+          onTimeout: () {
+            throw TimeoutException('Request timed out');
+          },
+        );
+
+    // DEBUG: Afficher les entêtes et le début du contenu
+    debugPrint('URL: $url');
+    debugPrint('Status Code: ${response.statusCode}');
+    debugPrint('Content-Type: ${response.headers['content-type']}');
+    debugPrint(
+      'First 200 chars: ${response.body.substring(0, min(200, response.body.length))}',
     );
+
+    return response;
   }
 
   RssFeed _parseResponse(String url, http.Response response) {
@@ -166,6 +199,7 @@ class ArticleService {
 
     try {
       final feed = RssFeed.parse(response.body);
+
       _cache[url] = feed;
       return feed;
     } catch (e) {

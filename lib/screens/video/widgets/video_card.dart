@@ -99,7 +99,7 @@ class YoutubeVideoCard extends StatelessWidget {
                     // Titre avec indicateur actif
                     Text(
                       video.title,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 16,

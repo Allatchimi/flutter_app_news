@@ -91,8 +91,11 @@ dependencies:
   firebase_core:
   firebase_messaging:
   flutter_local_notifications:
+  path_provider:
   webview_flutter:
   provider:
+  webfeed_plus:
+  youtube_player_flutter
 
 ````
 

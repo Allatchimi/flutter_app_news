@@ -1,19 +1,19 @@
-import 'package:app_news/screens/home/widgets/home_screen_widgets.dart';
-import 'package:app_news/services/home_service.dart';
+import 'package:app_news/screens/article/widgets/article_widgets.dart';
+import 'package:app_news/services/article_service.dart';
 import 'package:app_news/utils/handleException.dart';
 import 'package:app_news/utils/helper/topic_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:webfeed_plus/webfeed_plus.dart';
 
-class HomeSectionCountry extends StatefulWidget {
-  const HomeSectionCountry({super.key});
+class SectionCountry extends StatefulWidget {
+  const SectionCountry({super.key});
 
   @override
-  _HomeSectionCountryState createState() => _HomeSectionCountryState();
+  _SectionCountryState createState() => _SectionCountryState();
 }
 
-class _HomeSectionCountryState extends State<HomeSectionCountry> {
-  final HomeService _homeService = HomeService();
+class _SectionCountryState extends State<SectionCountry> {
+  final ArticleService _homeService = ArticleService();
   final String url = "https://www.alwihdainfo.com/xml/syndication.rss";
   
   RssFeed? _feed;

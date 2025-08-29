@@ -1,55 +1,76 @@
-import 'package:app_news/services/feed_service.dart';
+import 'package:app_news/screens/article/widgets/section_country.dart';
+import 'package:app_news/screens/article/widgets/section_geo.dart';
+import 'package:app_news/screens/article/widgets/section_tab.dart';
+import 'package:app_news/utils/app_colors.dart';
+import 'package:app_news/utils/onboarding_util/topics.dart';
+import 'package:app_news/widgets/capsule_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 
 
 class ArticlePage extends StatefulWidget {
-  final String url;
-  const ArticlePage({required this.url, super.key});
+  const ArticlePage({super.key});
 
   @override
   State<ArticlePage> createState() => _ArticlePageState();
 }
 
 class _ArticlePageState extends State<ArticlePage> {
-  final FeedService _service = FeedService();
-  String? _htmlContent;
-  bool _isLoading = true;
-  String? _error;
+  int _selectedItemIndex = 0;
+  String _tabName = "ManaraTv";
 
   @override
   void initState() {
     super.initState();
-    _loadArticle();
   }
 
-  Future<void> _loadArticle() async {
-    try {
-      final content = await _service.fetchCleanArticle(widget.url);
-      if (mounted) setState(() { _htmlContent = content; _isLoading = false; });
-    } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _isLoading = false; });
-    }
+    void _onTabChanged(String newTab) {
+    setState(() => _tabName = newTab);
   }
+
+  void _onTabIndexChanged(int index) {
+    setState(() {
+      _selectedItemIndex = _selectedItemIndex == index ? -1 : index;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Article')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text('Erreur: $_error'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Html(
-                    data: _htmlContent,
-                    style: {
-                      "body": Style(fontSize: FontSize(16.0)),
-                      "img": Style(width: Width(100, Unit.percent)),
-                    },
-                  ),
-                ),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildTopicSelector(context),
+          SectionTab(topic: _tabName),
+          const SectionCountry(),
+          const SectionGeo(),
+        ],
+      ),
+    );
+  }
+
+
+Widget _buildTopicSelector(BuildContext context) {
+    return SizedBox(
+      height: 50,
+      width: MediaQuery.of(context).size.width * 0.98,
+      child: ListView.builder(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        itemCount: topicList.length,
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        itemBuilder: (context, index) {
+          return CapsuleWidget(
+            name: topicList[index].value,
+            border: AppColors.primaryColor,
+            background: _selectedItemIndex == index
+                ? AppColors.primaryColor.withOpacity(0.8)
+                : Colors.white,
+            currentIndex: index,
+            onTapCallback: _onTabChanged,
+            onTapIndex: _onTabIndexChanged,
+          );
+        },
+      ),
     );
   }
 }

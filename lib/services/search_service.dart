@@ -31,7 +31,7 @@ class SearchService {
               title: item.title ?? 'No title',
               link: item.link ?? '',
               author: item.dc?.creator ?? item.source?.url ?? 'Unknown',
-              publishDate: item.pubDate?.toString() ?? '',
+              publishDate: item.pubDate ?? DateTime.now(),
               description: item.description ?? '',
             ))
         .toList();

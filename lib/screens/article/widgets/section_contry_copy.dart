@@ -9,14 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:webfeed_plus/webfeed_plus.dart';
 import 'package:flutter/material.dart';
 
-class HomeSectionCountry extends StatefulWidget {
-  const HomeSectionCountry({super.key});
+class SectionCountry extends StatefulWidget {
+  const SectionCountry({super.key});
 
   @override
-  _HomeSectionCountryState createState() => _HomeSectionCountryState();
+  _SectionCountryState createState() => _SectionCountryState();
 }
 
-class _HomeSectionCountryState extends State<HomeSectionCountry> {
+class _SectionCountryState extends State<SectionCountry> {
   final DataHandler _dataHandler = DataHandler();
   final http.Client _httpClient = http.Client();
   
@@ -65,7 +65,7 @@ class _HomeSectionCountryState extends State<HomeSectionCountry> {
     try {
       setState(() => _isLoading = true);
       
-      final url = "https://news.google.com/rss?ceid=${_countryCode}:${_langCode}&hl=${_lang.toLowerCase()}&gl=${_countryCode}";
+      final url = "https://news.google.com/rss?ceid=$_countryCode:$_langCode&hl=$_lang.toLowerCase()&gl=$_countryCode";
       
       final response = await _httpClient
           .get(Uri.parse(url))
@@ -176,7 +176,7 @@ class _HomeSectionCountryState extends State<HomeSectionCountry> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ViewMore(
-                    getURL: "https://news.google.com/rss?ceid=${_countryCode}:${_langCode}&hl=${_langCode.toLowerCase()}&gl=${_countryCode}",
+                    getURL: "https://news.google.com/rss?ceid=$_countryCode:$_langCode&hl=${_langCode.toLowerCase()}&gl=$_countryCode",
                     name: "C o u n t r y",
                   ),
                 ),

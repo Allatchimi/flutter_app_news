@@ -18,27 +18,30 @@ class ArticleModelAdapter extends TypeAdapter<ArticleModel> {
     };
     return ArticleModel(
       title: fields[0] as String,
-      link: fields[1] as String,
-      author: fields[2] as String,
-      publishDate: fields[3] as String,
-      description: fields[4] as String,
+      description: fields[1] as String,
+      link: fields[2] as String,
+      publishDate: fields[3] as DateTime?,
+      imageUrl: fields[4] as String?,
+      author: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ArticleModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
-      ..write(obj.link)
+      ..write(obj.description)
       ..writeByte(2)
-      ..write(obj.author)
+      ..write(obj.link)
       ..writeByte(3)
       ..write(obj.publishDate)
       ..writeByte(4)
-      ..write(obj.description);
+      ..write(obj.imageUrl)
+      ..writeByte(5)
+      ..write(obj.author);
   }
 
   @override

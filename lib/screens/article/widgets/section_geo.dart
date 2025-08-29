@@ -1,25 +1,21 @@
 import 'dart:io';
-
-import 'package:app_news/screens/home/widgets/home_screen_widgets.dart';
-import 'package:app_news/services/home_service.dart';
-import 'package:app_news/utils/app_colors.dart';
+import 'package:app_news/screens/article/widgets/article_widgets.dart';
+import 'package:app_news/services/article_service.dart';
 import 'package:app_news/utils/helper/topic_functions.dart';
 import 'package:app_news/utils/onboarding_util/topic_urls.dart';
-import 'package:app_news/widgets/app_text.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
 import 'package:webfeed_plus/webfeed_plus.dart';
 import 'package:flutter/material.dart';
 
-class HomeSectionGeo extends StatefulWidget {
-  const HomeSectionGeo({super.key});
+class SectionGeo extends StatefulWidget {
+  const SectionGeo({super.key});
 
   @override
-  _HomeSectionGeoState createState() => _HomeSectionGeoState();
+  _SectionGeoState createState() => _SectionGeoState();
 }
 
-class _HomeSectionGeoState extends State<HomeSectionGeo> {
-  final HomeService _homeService = HomeService();
+class _SectionGeoState extends State<SectionGeo> {
+  final ArticleService _homeService = ArticleService();
   //final rssUrl = "https://manara.td/feed/";
   final rssUrl = TopicUrls.urls['TCHADONE'] ?? '';
   RssFeed? _feed;

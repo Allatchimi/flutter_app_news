@@ -1,10 +1,11 @@
-import 'package:app_news/screens/video/widgets/video_widget.dart';
-import 'package:flutter/material.dart';
 import 'package:app_news/models/video_item.dart';
+import 'package:app_news/screens/video/widgets/video_widget.dart';
 import 'package:app_news/services/video_service.dart';
-import 'package:app_news/widgets/youtube_player_flutter.dart';
 import 'package:app_news/utils/app_colors.dart';
+import 'package:app_news/utils/onboarding_util/topic_urls.dart';
 import 'package:app_news/widgets/generic_app_bar.dart';
+import 'package:app_news/widgets/youtube_player_flutter.dart';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 class VideosPage extends StatefulWidget {
@@ -15,7 +16,14 @@ class VideosPage extends StatefulWidget {
 }
 
 class _VideosPageState extends State<VideosPage> {
-  late Future<List<VideoItem>> _videosFuture;
+
+  static final String tchadInfoUrl = TopicUrls.videoUrls['TCHADINFOS'] ?? '';
+  static final String manaraUrl = TopicUrls.videoUrls['MANARA'] ?? '';
+  static final String alwihidaUrl = TopicUrls.videoUrls['ALWIHDAINFO'] ?? '';
+     
+  late Future<List<VideoItem>> manaraVideo;
+  late Future<List<VideoItem>> alwihdaVideos;
+  late Future<List<VideoItem>> tchadinfosVideos;
   bool isGridView = false;
 
   @override
@@ -27,25 +35,30 @@ class _VideosPageState extends State<VideosPage> {
   Future<void> _loadData({required bool forceRefresh}) async {
     if (forceRefresh) {
       final box = await Hive.openBox('youtube_cache');
-      await box.delete('playlists');
-      await box.delete('lastUpdatePlaylists');
+
     }
     setState(() {
-      _videosFuture = VideoService.fetchVideos();
+      manaraVideo = VideoService.fetchVideos(manaraUrl);
+      alwihdaVideos = VideoService.fetchVideos(alwihidaUrl);
+      tchadinfosVideos = VideoService.fetchVideos(tchadInfoUrl);
+
     });
   }
 
-  void _playVideo(String link) {
-    final videoId = Uri.parse(link).queryParameters['v'] ?? '';
-    if (videoId.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => YoutubePlayerScreen(videoId: videoId),
+void _playVideo(String link, List<VideoItem> videoList) {
+  final index = videoList.indexWhere((v) => v.link == link);
+  if (index != -1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => YoutubePlaylistPlayerScreen(
+          videos: videoList,
+          initialIndex: index,
         ),
-      );
-    }
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -71,21 +84,42 @@ class _VideosPageState extends State<VideosPage> {
           padding: const EdgeInsets.all(8),
           child: Column(
             children: [
-              FutureBuilder<List<VideoItem>>(
-                future: _videosFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Text('Erreur vidéos : ${snapshot.error}');
-                  }
-                  return VideoWidget(
-                    videos: snapshot.data ?? [],
-                    isGridView: isGridView,
-                    onVideoTap: _playVideo,
-                  );
-                },
+              VideoDeSite(
+                isGridView: isGridView,
+                videosFuture: manaraVideo,
+                playVideo:  _playVideo,
+                nomSite: "Manara TV",),
+              const SizedBox(height: 20),
+              VideoDeSite(
+                isGridView: isGridView,
+                videosFuture: alwihdaVideos,
+                playVideo: _playVideo,
+                nomSite: "Alwihda Info",
+              ),
+              const SizedBox(height: 20),
+              VideoDeSite(
+                isGridView: isGridView,
+                videosFuture: tchadinfosVideos,
+                playVideo: _playVideo,
+                nomSite: "Tchad Infos",
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Avertissement",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryColor,
+                ),
+              ),
+              Divider(
+                color: AppColors.secondaryColor,
+                thickness: 2,
+                height: 20,
+              ),
+              const Text(
+                "Powered by Mahamat Allatchimi",
+                style: TextStyle(fontSize: 12, color: AppColors.primaryColor),
               ),
             ],
           ),
@@ -94,3 +128,5 @@ class _VideosPageState extends State<VideosPage> {
     );
   }
 }
+
+

@@ -1,8 +1,6 @@
-import 'package:app_news/screens/profil/profile_page.dart';
 import 'package:app_news/screens/profil/settings/widgets/settings_section.dart';
 import 'package:flutter/material.dart';
 import 'widgets/settings_switch_tile.dart';
-import 'widgets/settings_item.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

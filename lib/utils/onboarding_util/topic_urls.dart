@@ -10,13 +10,11 @@ class TopicUrls {
     'TCHADACTU': 'https://www.tchadactu.com/politique.feed',
     'MAKAILA': 'https://www.makaila.fr/feed/',
   };
+
+
   static const Map<String, String> videoUrls = {
-    //'MANARA': '',
-    'ALWIHDAINFO': 'https://www.alwihdainfo.com/xml/videopodcast.xml',
-   // 'LEPAYS': '',
-    //'TCHADINFOS': '',
-   // 'TCHADONE': '',
-   // 'TCHADACTU': '',
-    //'MAKAILA': '',
-  };  
+  'MANARA': "https://www.youtube.com/feeds/videos.xml?channel_id=UCuOej_TortvdHqtv7H6Kwog",
+  'ALWIHDAINFO': "https://www.youtube.com/feeds/videos.xml?channel_id=UCoAABXmLIVaOH6D7twXLSTQ",
+  'TCHADINFOS': "https://www.youtube.com/feeds/videos.xml?channel_id=UCk4XIvicudloWCSrknPHLBQ",
+};
 }

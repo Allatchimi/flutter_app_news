@@ -1,17 +1,12 @@
-import 'dart:convert';
-import 'package:app_news/screens/notification/notifications_page.dart';
 import 'package:app_news/screens/common/splash_screen.dart';
 import 'package:app_news/services/notification_service.dart';
 import 'package:app_news/utils/helper/hive_box.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -20,7 +15,7 @@ Future<void> main() async {
 
   await Firebase.initializeApp();
 
-  // Affiche le token FCM
+  // Affiche le token FCM (utile pour debug ou tests manuels)
   final apnsToken = await firebaseMessaging.getAPNSToken();
   if (apnsToken != null) {
     firebaseMessaging.getToken().then(debugPrint);
@@ -37,30 +32,6 @@ Future<void> main() async {
   final notificationService = NotificationService();
   await notificationService.initialize();
 
-  // Gestion de notification tapée à l'ouverture de l'app
-  final RemoteMessage? initialMessage = await firebaseMessaging.getInitialMessage();
-  if (initialMessage != null) {
-    await notificationService.handleMessageOpenedApp(initialMessage);
-  }
-
-  // Initialisation locale avec gestion du tap
-  await flutterLocalNotificationsPlugin.initialize(
-    const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    ),
-    onDidReceiveNotificationResponse: (response) {
-      final payload = response.payload;
-      if (payload != null) {
-        final data = jsonDecode(payload);
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (_) => const NotificationsPage(),
-          ),
-        );
-      }
-    },
-  );
 
   runApp(const MainApp());
 }

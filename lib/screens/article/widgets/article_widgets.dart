@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:app_news/utils/app_colors.dart';
-import 'package:app_news/screens/profil/profile_page.dart';
 import 'package:app_news/screens/profil/settings/settings_screen.dart';
 import 'package:webfeed_plus/domain/rss_feed.dart';
 
@@ -53,12 +52,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Positioned(
                     right: 8,
                     top: 8,
-                    child: CircleAvatar(
-                      radius: 10,
-                      backgroundColor: Colors.red,
-                      child: Text(
-                        count.toString(),
-                        style: const TextStyle(fontSize: 10, color: Colors.white),
+                    child: IgnorePointer(
+                      child: CircleAvatar(
+                        radius: 10,
+                        backgroundColor: Colors.red,
+                        child: Text(
+                          count.toString(),
+                          style: const TextStyle(fontSize: 10, color: Colors.white),
+                        ),
                       ),
                     ),
                   ),

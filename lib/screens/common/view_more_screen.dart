@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:app_news/screens/article/widgets/news_widget.dart';
-import 'package:app_news/screens/home/widgets/home_screen_widgets.dart';
-import 'package:app_news/services/home_service.dart';
+import 'package:app_news/screens/article/widgets/article_widgets.dart';
+import 'package:app_news/services/article_service.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/handleException.dart';
 import 'package:app_news/widgets/generic_app_bar.dart';
@@ -23,7 +21,7 @@ class ViewMore extends StatefulWidget {
 }
 
 class _ViewMoreState extends State<ViewMore> {
-  final HomeService _homeService = HomeService();
+  final ArticleService _homeService = ArticleService();
   RssFeed? _feed;
   bool _isLoading = true;
   String? _error;

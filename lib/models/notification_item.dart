@@ -35,8 +35,9 @@ class NotificationItem  extends HiveObject{
     this.link,
   });
 
+  @override
   Future<void> save() async {
-    final box = await Hive.box<NotificationItem>('notifications');
+    final box = Hive.box<NotificationItem>('notifications');
     await box.put(id, this);
   }
 

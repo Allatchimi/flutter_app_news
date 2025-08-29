@@ -22,13 +22,16 @@ class VideoItemAdapter extends TypeAdapter<VideoItem> {
       thumbnailUrl: fields[2] as String?,
       description: fields[3] as String?,
       id: fields[4] as String?,
+      source: fields[5] as String?,
+      pubDate: fields[6] as DateTime?,
+      videoUrl: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, VideoItem obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -38,7 +41,13 @@ class VideoItemAdapter extends TypeAdapter<VideoItem> {
       ..writeByte(3)
       ..write(obj.description)
       ..writeByte(4)
-      ..write(obj.id);
+      ..write(obj.id)
+      ..writeByte(5)
+      ..write(obj.source)
+      ..writeByte(6)
+      ..write(obj.pubDate)
+      ..writeByte(7)
+      ..write(obj.videoUrl);
   }
 
   @override

@@ -36,10 +36,12 @@ class _NewsWebviewAppState extends State<NewsWebviewApp> {
         },
         ),
         title: const AppText(
-          text: "Les détails de l'article",
+          text: "Article détaillé",
           fontSize: 18.0,
           color: AppColors.blackColor,
           overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          fontWeight: FontWeight.bold
         ),
       ),
       body: WebViewWidget(

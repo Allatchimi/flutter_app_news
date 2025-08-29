@@ -1,15 +1,13 @@
-import 'package:app_news/screens/home/widgets/home_screen_widgets.dart';
+import 'package:app_news/screens/article/widgets/article_widgets.dart';
+import 'package:app_news/screens/home/home_content.dart';
 import 'package:app_news/screens/profil/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/screens/notification/notifications_page.dart';
-import 'package:app_news/screens/home/home_content.dart';
 import 'package:app_news/screens/search/search_page.dart';
 import 'package:app_news/screens/video/videos_page.dart';
 import 'package:app_news/screens/favorite/favorites_page.dart';
-
 import 'package:app_news/services/notification_service.dart';
-
 import 'package:app_news/utils/helper/notifier.dart';
 import 'package:app_news/screens/common/main_navigation_screen.dart';
 

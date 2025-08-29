@@ -1,65 +1,184 @@
-// lib/services/rss_service.dart
 import 'dart:async';
+import 'dart:math';
 import 'package:app_news/utils/handleException.dart';
-import 'package:html/dom.dart';
+import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as htmlParser;
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:webfeed_plus/webfeed_plus.dart';
+import 'package:webfeed_plus/domain/rss_feed.dart';
+import 'package:flutter/foundation.dart';
 
 class ArticleService {
   final http.Client _client = http.Client();
-  final Duration _timeout = const Duration(seconds: 15);
-  final Connectivity _connectivity = Connectivity();
+  final Duration _timeout;
+  final Connectivity _connectivity;
+  Completer<void>? _disposeCompleter;
+  final _cache = <String, RssFeed>{};
+  final _cleanContentCache = <String, String>{};
+
+  ArticleService({Duration? timeout, Connectivity? connectivity})
+    : _timeout = timeout ?? const Duration(seconds: 15),
+      _connectivity = connectivity ?? Connectivity();
+
+  Future<RssFeed> fetchFeedWithRetry(String url, {int retries = 3}) async {
+    int attempt = 0;
+    late RssFeed feed;
+
+    while (attempt < retries) {
+      attempt++;
+      try {
+        feed = await fetchFeed(url);
+        return feed;
+      } on NetworkException catch (e) {
+        if (attempt >= retries) throw e;
+        await _exponentialBackoff(attempt);
+      } on ApiException catch (e) {
+        if (attempt >= retries || (e.statusCode != null && e.statusCode! >= 500)) {
+          throw e;
+        }
+        await Future.delayed(const Duration(seconds: 1));
+      } on TimeoutException {
+        if (attempt >= retries) rethrow;
+        await _exponentialBackoff(attempt);
+      }
+    }
+    throw ApiException('Échec après $retries tentatives');
+  }
 
   Future<RssFeed> fetchFeed(String url) async {
-    // Vérifier d'abord la connexion internet
-    final connectivityResult = await _connectivity.checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
-      throw NetworkException('No internet connection');
-    }
-    try {
-      final response = await _client.get(Uri.parse(url)).timeout(_timeout);
+    if (_cache.containsKey(url)) return _cache[url]!;
+    if (_disposeCompleter != null) throw StateError('Service disposed');
 
-      if (response.statusCode == 200) {
-        return RssFeed.parse(response.body);
-      } else {
-        throw ApiException('Failed to load RSS feed: ${response.statusCode}');
-      }
-    } on TimeoutException {
-      throw NetworkException('Request timed out');
+    try {
+      await _checkConnectivity();
+      final response = await _makeHttpRequest(url);
+      final feed = _parseResponse(url, response);
+      
+      await _enrichFeedItems(feed);
+      
+      return feed;
     } on http.ClientException {
-      throw NetworkException('Network error occurred');
+      throw NetworkException('Erreur réseau');
     } catch (e) {
-      throw ApiException('Failed to parse RSS feed: $e');
+      throw ApiException('Erreur de traitement: ${e.toString()}');
     }
   }
-    /// Récupère le contenu HTML nettoyé d’un article
+
+  Future<void> _enrichFeedItems(RssFeed feed) async {
+    if (feed.items == null) return;
+
+    for (final item in feed.items!) {
+      if (item.link != null && !_cleanContentCache.containsKey(item.link)) {
+        try {
+          final cleanContent = await fetchCleanContent(item.link!);
+          _cleanContentCache[item.link!] = cleanContent;
+        } catch (e) {
+          debugPrint('Erreur lors du nettoyage de ${item.link}: $e');
+          _cleanContentCache[item.link!] = '<p>Contenu non disponible</p>';
+        }
+      }
+    }
+  }
+
+  // Méthode publique pour accéder au contenu nettoyé
+  String? getCleanContent(String url) {
+    return _cleanContentCache[url];
+  }
+
   Future<String> fetchCleanContent(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      throw Exception('Impossible de charger l\'article');
+      throw Exception('Impossible de charger l\'article: ${response.statusCode}');
     }
 
     final document = htmlParser.parse(response.body);
 
-    // Sélectionner le contenu principal (à adapter selon le site)
-    Element? content =
-        document.querySelector('article') ??
-        document.querySelector('.post-content') ??
-        document.querySelector('#content');
+    final selectors = [
+      'article',
+      '.post-content',
+      '.article-content',
+      '#content',
+      '.main-content',
+      '.entry-content',
+      '.story-content',
+      '[role="main"]',
+      'main',
+    ];
+
+    dom.Element? content;
+    for (final selector in selectors) {
+      content = document.querySelector(selector);
+      if (content != null) break;
+    }
+
+    if (content == null) {
+      final divs = document.querySelectorAll('div');
+      content = divs.fold<dom.Element?>(null, (largest, current) {
+        final textLength = current.text.length;
+        if (largest == null || textLength > largest.text.length) {
+          return current;
+        }
+        return largest;
+      });
+    }
 
     if (content == null) return '<p>Contenu indisponible</p>';
 
-    // Supprimer toutes les publicités ou divs indésirables
-    content.querySelectorAll('.ads, .banner, iframe, .sponsored').forEach((el) => el.remove());
+    final unwantedSelectors = [
+      '.ads', '.banner', '.advertisement', '.sponsored',
+      '.social-share', '.comments', '.related-posts',
+      'iframe', 'script', 'nav', 'footer', 'header'
+    ];
+
+    for (final selector in unwantedSelectors) {
+      content!.querySelectorAll(selector).forEach((el) => el.remove());
+    }
 
     return content.outerHtml;
   }
 
+  Future<void> _exponentialBackoff(int attempt) async {
+    final delay = Duration(seconds: min(pow(2, attempt).toInt(), 30));
+    await Future.delayed(delay);
+  }
 
-  void dispose() {
+  Future<void> _checkConnectivity() async {
+    final result = await _connectivity.checkConnectivity();
+    if (result == ConnectivityResult.none) {
+      throw NetworkException('Pas de connexion internet');
+    }
+  }
+
+  Future<http.Response> _makeHttpRequest(String url) async {
+    return await _client.get(Uri.parse(url)).timeout(
+      _timeout,
+      onTimeout: () {
+        throw TimeoutException('Request timed out');
+      },
+    );
+  }
+
+  RssFeed _parseResponse(String url, http.Response response) {
+    if (response.statusCode != 200) {
+      throw ApiException('Erreur serveur', response.statusCode);
+    }
+
+    try {
+      final feed = RssFeed.parse(response.body);
+      _cache[url] = feed;
+      return feed;
+    } catch (e) {
+      throw ApiException('Erreur de parsing RSS: ${e.toString()}');
+    }
+  }
+
+  Future<void> dispose() async {
+    if (_disposeCompleter != null) return;
+
+    _disposeCompleter = Completer<void>();
     _client.close();
+    _cache.clear();
+    _cleanContentCache.clear();
+    _disposeCompleter!.complete();
   }
 }
-

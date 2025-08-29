@@ -1,23 +1,19 @@
-import 'package:app_news/screens/home/widgets/home_screen_widgets.dart';
+import 'package:app_news/screens/article/widgets/article_widgets.dart';
 import 'package:app_news/services/article_service.dart';
-import 'package:app_news/utils/app_colors.dart';
 import 'package:app_news/utils/helper/topic_functions.dart';
 import 'package:app_news/utils/onboarding_util/topic_urls.dart';
-import 'package:app_news/widgets/app_text.dart';
-
-
 import 'package:flutter/material.dart';
 import 'package:webfeed_plus/webfeed_plus.dart';
 
-class HomeSectionTab extends StatefulWidget {
+class SectionTab extends StatefulWidget {
   final String topic;
-  const HomeSectionTab({super.key, required this.topic});
+  const SectionTab({super.key, required this.topic});
 
   @override
-  _HomeSectionTabState createState() => _HomeSectionTabState();
+  _SectionTabState createState() => _SectionTabState();
 }
 
-class _HomeSectionTabState extends State<HomeSectionTab> {
+class _SectionTabState extends State<SectionTab> {
   RssFeed? _feed;
   bool _isLoading = false;
   String? _error;
@@ -31,7 +27,7 @@ class _HomeSectionTabState extends State<HomeSectionTab> {
   }
 
   @override
-  void didUpdateWidget(HomeSectionTab oldWidget) {
+  void didUpdateWidget(SectionTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.topic != widget.topic) {
       _loadFeed();

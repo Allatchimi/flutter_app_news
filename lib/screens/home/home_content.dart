@@ -1,68 +1,36 @@
-import 'package:app_news/utils/app_colors.dart';
-import 'package:app_news/utils/onboarding_util/topics.dart';
-import 'package:app_news/widgets/capsule_widget.dart';
-import 'package:app_news/screens/home/sub_widgets/home_section_country.dart';
-import 'package:app_news/screens/home/sub_widgets/home_section_geo.dart';
-import 'package:app_news/screens/home/sub_widgets/home_section_tab.dart';
+import 'package:app_news/screens/article/article_page.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 
-class HomeContent extends StatefulWidget {
+class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
-
-  @override
-  State<HomeContent> createState() => _HomeContentState();
-}
-
-class _HomeContentState extends State<HomeContent> {
-  int _selectedItemIndex = 0;
-  String _tabName = "ManaraTv";
-
-  void _onTabChanged(String newTab) {
-    setState(() => _tabName = newTab);
-  }
-
-  void _onTabIndexChanged(int index) {
-    setState(() {
-      _selectedItemIndex = _selectedItemIndex == index ? -1 : index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildTopicSelector(context),
-          HomeSectionTab(topic: _tabName),
-          const HomeSectionCountry(),
-          const HomeSectionGeo(),
+          SizedBox(height: 10),
+          Text("Video Recents",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,)),
+          SizedBox(height: 10),
+          CarouselSlider(
+            items:[1,2,3,4,5].map((e) => Container(
+              width: MediaQuery.of(context).size.width,
+              margin: EdgeInsets.all(5.0),
+              decoration: BoxDecoration(
+                color: Colors.amber,
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Center(child: Text('Video $e', style: TextStyle(fontSize: 16.0, color: Colors.white),)),
+            )).toList(),
+            options: CarouselOptions(
+              height: 200,
+              )
+              ),
+          const ArticlePage(),
         ],
       ),
     );
   }
-
-  Widget _buildTopicSelector(BuildContext context) {
-    return SizedBox(
-      height: 50,
-      width: MediaQuery.of(context).size.width * 0.98,
-      child: ListView.builder(
-        shrinkWrap: true,
-        scrollDirection: Axis.horizontal,
-        itemCount: topicList.length,
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-        itemBuilder: (context, index) {
-          return CapsuleWidget(
-            name: topicList[index].value,
-            border: AppColors.primaryColor,
-            background: _selectedItemIndex == index
-                ? AppColors.primaryColor.withOpacity(0.8)
-                : Colors.white,
-            currentIndex: index,
-            onTapCallback: _onTabChanged,
-            onTapIndex: _onTabIndexChanged,
-          );
-        },
-      ),
-    );
-  }
 }
+

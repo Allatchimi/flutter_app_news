@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:app_news/main.dart';
+import 'package:app_news/models/video_item.dart';
 import 'package:app_news/screens/notification/notifications_page.dart';
+import 'package:app_news/services/article_service.dart';
+import 'package:app_news/services/video_service.dart';
 import 'package:app_news/utils/helper/hive_box.dart';
 import 'package:app_news/utils/onboarding_util/topic_urls.dart';
 import 'package:app_news/widgets/news_webview.dart';
@@ -10,21 +13,20 @@ import 'package:app_news/widgets/youtube_player_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:app_news/models/notification_item.dart';
 import 'package:app_news/utils/helper/notifier.dart';
-import 'package:app_news/utils/extensions.dart';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
-import 'package:http/http.dart' as http;
-import 'package:xml/xml.dart' as xml;
+import 'package:webfeed_plus/domain/rss_feed.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+  final ArticleService _homeService = ArticleService();
   factory NotificationService() => _instance;
   NotificationService._internal();
+ 
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -177,7 +179,7 @@ class NotificationService {
     debugPrint('🔄 Saving notification: ${message.messageId}');
 
     try {
-      final box = await Hive.isBoxOpen('notifications')
+      final box = Hive.isBoxOpen('notifications')
           ? Hive.box<NotificationItem>('notifications')
           : await Hive.openBox<NotificationItem>('notifications');
 
@@ -204,7 +206,7 @@ class NotificationService {
   }
 
   Future<void> saveLocalNotification(NotificationItem item) async {
-    final box = await Hive.isBoxOpen('notifications')
+    final box = Hive.isBoxOpen('notifications')
         ? Hive.box<NotificationItem>('notifications')
         : await Hive.openBox<NotificationItem>('notifications');
 
@@ -307,16 +309,22 @@ class NotificationService {
   Future<void> _navigateToContent(String? link, String type) async {
     if (link == null || navigatorKey.currentState == null) return;
 
-    // Revenir à l'écran principal (HomeScreen) sans utiliser les routes nommées
     navigatorKey.currentState!.popUntil((route) => route.isFirst);
 
     // Pause légère pour éviter les conflits de navigation
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // Naviguer vers le bon écran en fonction du type
     if (type == 'youtube') {
+      // Créer une playlist factice avec une seule vidéo
+      final videoList = [
+        VideoItem(title: "Vidéo depuis notification", link: link),
+      ];
+
       navigatorKey.currentState!.push(
-        MaterialPageRoute(builder: (_) => YoutubePlayerScreen(videoId: link)),
+        MaterialPageRoute(
+          builder: (_) =>
+              YoutubePlaylistPlayerScreen(videos: videoList, initialIndex: 0),
+        ),
       );
     } else {
       navigatorKey.currentState!.push(
@@ -386,123 +394,87 @@ class NotificationService {
   static Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
     try {
       await Firebase.initializeApp();
-      final service = NotificationService();
-      await service._saveNotification(message);
-      await service._showLocalNotification(message);
+      // ✅ Utilisez l'instance singleton directement
+      await _instance._saveNotification(message);
+      await _instance._showLocalNotification(message);
     } catch (e) {
       debugPrint('❌ Background handler error: $e');
     }
   }
 
-  // Vérification des nouvelles vidéos YouTube
+  // Vérification des nouvelles vidéos YouTube depuis tous les canaux
   Future<bool> checkNewYoutubeVideos() async {
-    const rssUrl =
-        "https://www.youtube.com/feeds/videos.xml?channel_id=UC-lHJZR3Gqxm24_Vd_AJ5Yw";
-    try {
-      final response = await http.get(Uri.parse(rssUrl));
-      if (response.statusCode == 200) {
-        final document = xml.XmlDocument.parse(response.body);
-        final latestEntry = document.findAllElements('entry').first;
+    final box = await Hive.openBox('last_items');
+    bool hasNewVideos = false;
 
-        final videoUrl =
-            latestEntry.findElements('link').first.getAttribute('href') ?? '';
-        final videoTitle = latestEntry.findElements('title').first.text;
+    for (final entry in TopicUrls.videoUrls.entries) {
+      final topicKey = entry.key;
+      final feedUrl = entry.value;
 
-        final box = await Hive.openBox('last_items');
-        final lastSeen = box.get('last_video_url', defaultValue: '');
+      // Skip les URLs vides
+      if (feedUrl.isEmpty) continue;
 
-        if (videoUrl != lastSeen) {
-          // 👇 Création d’un NotificationItem
+      try {
+        // ✅ UTILISATION DE VideoService EXISTANT
+        final List<VideoItem> videos = await VideoService.fetchVideos(feedUrl);
+
+        if (videos.isEmpty) continue;
+
+        final latestVideo = videos.first;
+        final videoUrl = latestVideo.link;
+        final videoTitle = latestVideo.title;
+
+        final lastSeen = box.get(
+          'last_video_${topicKey}_url',
+          defaultValue: '',
+        );
+
+        if (videoUrl != lastSeen && videoUrl.isNotEmpty) {
           final item = NotificationItem(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            title: 'Nouvelle vidéo disponible',
+            id: '${topicKey}_${DateTime.now().millisecondsSinceEpoch}',
+            title: '[${topicKey}] Nouvelle vidéo disponible',
             body: videoTitle,
-            payload: jsonEncode({'url': videoUrl, 'type': 'youtube'}),
+            payload: jsonEncode({
+              'url': videoUrl,
+              'type': 'youtube',
+              'source': topicKey,
+            }),
             date: DateTime.now(),
             isRead: false,
             type: 'youtube',
             link: videoUrl,
           );
 
-          // 🔄 Sauvegarde dans Hive
           await saveLocalNotification(item);
 
-          // 🔔 Affichage de la notification locale
           await _showLocalNotification(
             RemoteMessage(
               notification: RemoteNotification(
                 title: item.title,
                 body: item.body,
               ),
-              data: {'url': item.link ?? '', 'type': item.type, 'id': item.id},
+              data: {
+                'url': item.link ?? '',
+                'type': item.type,
+                'id': item.id,
+                'source': topicKey,
+              },
             ),
           );
 
-          await box.put('last_video_url', videoUrl);
-          return true;
+          await box.put('last_video_${topicKey}_url', videoUrl);
+          hasNewVideos = true;
+          debugPrint('✅ Nouvelle vidéo détectée pour $topicKey: $videoTitle');
         }
+      } catch (e) {
+        debugPrint('❌ Error checking YouTube videos for $topicKey: $e');
       }
-    } catch (e) {
-      debugPrint('Error checking YouTube videos: $e');
     }
 
-    return false;
+    return hasNewVideos;
   }
 
-  // Vérification des nouveaux articles
-  Future<bool> checkNewArticles() async {
-    const newsRss =
-        "https://news.google.com/rss/headlines/section/topic/WORLD?ceid=US:EN&hl=en&gl=US";
-
-    try {
-      final response = await http.get(Uri.parse(newsRss));
-      if (response.statusCode == 200) {
-        final document = xml.XmlDocument.parse(response.body);
-        final latestItem = document.findAllElements('item').first;
-        final title = latestItem.findElements('title').first.text;
-        final link = latestItem.findElements('link').first.text;
-
-        final box = await Hive.openBox('last_items');
-        final lastSeen = box.get('last_article_url', defaultValue: '');
-
-        if (link != lastSeen) {
-          // Création de l'objet NotificationItem
-          final item = NotificationItem(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            title: 'Nouvel article disponible',
-            body: title,
-            payload: jsonEncode({'url': link, 'type': 'article'}),
-            date: DateTime.now(),
-            isRead: false,
-            type: 'article',
-            link: link,
-          );
-
-          // 🔄 Sauvegarde dans Hive
-          await saveLocalNotification(item);
-
-          // 🔔 Affichage de la notification locale
-          await _showLocalNotification(
-            RemoteMessage(
-              notification: RemoteNotification(
-                title: item.title,
-                body: item.body,
-              ),
-              data: {'url': item.link ?? '', 'type': item.type, 'id': item.id},
-            ),
-          );
-
-          await box.put('last_article_url', link);
-          return true;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error checking articles: $e');
-    }
-
-    return false;
-  }
-
+  // Vérification des nouveaux articles depuis tous les flux RSS
   Future<bool> checkNewArticlesFromAllTopics() async {
     final box = await Hive.openBox('last_items');
     bool hasNewArticle = false;
@@ -512,52 +484,56 @@ class NotificationService {
       final rssUrl = entry.value;
 
       try {
-        final response = await http.get(Uri.parse(rssUrl));
-        if (response.statusCode == 200) {
-          final document = xml.XmlDocument.parse(response.body);
-          final latestItem = document.findAllElements('item').firstOrNull;
+        // ✅ UTILISATION DE HomeService EXISTANT
+        final RssFeed feed = await _homeService.fetchFeedWithRetry(rssUrl);
 
-          if (latestItem == null) continue;
+        if (feed.items == null || feed.items!.isEmpty) continue;
 
-          final title = latestItem.findElements('title').first.text;
-          final link = latestItem.findElements('link').first.text;
+        final latestItem = feed.items!.first;
+        final title = latestItem.title ?? 'Sans titre';
+        final link = latestItem.link ?? '';
 
-          final lastSeen = box.get(
-            'last_article_url_$topicKey',
-            defaultValue: '',
+        final lastSeen = box.get(
+          'last_article_${topicKey}_url',
+          defaultValue: '',
+        );
+
+        if (link != lastSeen && link.isNotEmpty) {
+          final item = NotificationItem(
+            id: '${topicKey}_${DateTime.now().millisecondsSinceEpoch}',
+            title: '[${topicKey}] $title',
+            body: title,
+            payload: jsonEncode({
+              'url': link,
+              'type': 'article',
+              'source': topicKey,
+            }),
+            date: DateTime.now(),
+            isRead: false,
+            type: 'article',
+            link: link,
           );
 
-          if (link != lastSeen) {
-            final item = NotificationItem(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              title: '[$topicKey] $title',
-              body: title,
-              payload: jsonEncode({'url': link, 'type': 'article'}),
-              date: DateTime.now(),
-              isRead: false,
-              type: 'article',
-              link: link,
-            );
+          await saveLocalNotification(item);
 
-            await saveLocalNotification(item);
-
-            await _showLocalNotification(
-              RemoteMessage(
-                notification: RemoteNotification(
-                  title: item.title,
-                  body: item.body,
-                ),
-                data: {
-                  'url': item.link ?? '',
-                  'type': item.type,
-                  'id': item.id,
-                },
+          await _showLocalNotification(
+            RemoteMessage(
+              notification: RemoteNotification(
+                title: item.title,
+                body: item.body,
               ),
-            );
+              data: {
+                'url': item.link ?? '',
+                'type': item.type,
+                'id': item.id,
+                'source': topicKey,
+              },
+            ),
+          );
 
-            await box.put('last_article_url_$topicKey', link);
-            hasNewArticle = true;
-          }
+          await box.put('last_article_${topicKey}_url', link);
+          hasNewArticle = true;
+          debugPrint('✅ Nouvel article détecté pour $topicKey: $title');
         }
       } catch (e) {
         debugPrint('❌ Error checking $topicKey: $e');
@@ -571,14 +547,15 @@ class NotificationService {
   Future<void> checkForNewContent() async {
     try {
       final hasNewVideos = await checkNewYoutubeVideos();
-      //final hasNewArticles = await checkNewArticles();
       final hasNewArticles = await checkNewArticlesFromAllTopics();
 
       if (hasNewVideos || hasNewArticles) {
-        debugPrint('New content available and notifications sent');
+        debugPrint('🎉 Nouveau contenu disponible - notifications envoyées');
+      } else {
+        debugPrint('📭 Aucun nouveau contenu détecté');
       }
     } catch (e) {
-      debugPrint('Error checking for new content: $e');
+      debugPrint('❌ Error checking for new content: $e');
     }
   }
 
@@ -598,6 +575,7 @@ class NotificationService {
     }
 
     await refreshNotifications();
+    _emitNotifications();
   }
 
   // Obtenir le nombre de notifications non lues
@@ -642,12 +620,14 @@ class NotificationService {
     }
 
     await refreshNotifications();
+    _emitNotifications();
   }
 
   Future<void> deleteNotification(String id) async {
     final box = await Hive.openBox<NotificationItem>('notifications');
     await box.delete(id);
     await refreshNotifications();
+    _emitNotifications();
   }
 
   void dispose() {
@@ -660,6 +640,7 @@ class NotificationService {
     await box.clear();
     await box.compact();
     await refreshNotifications();
+    _emitNotifications();
   }
 
   void _initStream() async {
@@ -684,10 +665,9 @@ class NotificationService {
       final unreadCount = box.values.where((n) => !n.isRead).length;
       unreadNotificationCount.value = unreadCount;
 
-      final notifications = box.values.toList().reversed.toList();
-      _notificationsStreamController.add(notifications);
+      _emitNotifications(); // ← UTILISATION ICI
     } catch (e) {
-      debugPrint('❌ Erreur lors du rafraîchissement des notifications: $e');
+      debugPrint('❌ Erreur refreshNotifications: $e');
     }
   }
 }

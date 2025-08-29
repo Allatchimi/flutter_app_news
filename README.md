@@ -91,8 +91,11 @@ dependencies:
   firebase_core:
   firebase_messaging:
   flutter_local_notifications:
+  path_provider:
   webview_flutter:
   provider:
+  webfeed_plus:
+  youtube_player_flutter
 
 ````
 
@@ -100,9 +103,9 @@ dependencies:
 
 * 🔍 Recherche d'articles
 
-* 🗂️ Catégorisation des actualités par thème
+* 🗂️ Catégorisation des actualités par Site
 
-* 👤 Authentification utilisateur
+* 👤 Suggestion de par popularité 
 
 * 📥 Téléchargement d'articles hors ligne
 

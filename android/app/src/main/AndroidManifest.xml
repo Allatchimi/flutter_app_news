@@ -12,7 +12,8 @@
     <application
         android:label="Labra Tchadwa"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
 
         <!-- Main Activity -->
         <activity

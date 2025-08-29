@@ -104,7 +104,7 @@ class _NewsWidgetState extends State<NewsWidget> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             AppText(
-                              text: removeHttpsAndCom(widget.author),
+                              text: extractDomainName(widget.link),
                               fontSize: 12.0,
                               color: AppColors.blackColor.withOpacity(1),
                               fontWeight: FontWeight.normal,

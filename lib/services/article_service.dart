@@ -53,6 +53,7 @@ class ArticleService {
       await _checkConnectivity();
       final response = await _makeHttpRequest(url);
       final feed = _parseResponse(url, response);
+     
       
       await _enrichFeedItems(feed);
       
@@ -131,7 +132,7 @@ class ArticleService {
     ];
 
     for (final selector in unwantedSelectors) {
-      content!.querySelectorAll(selector).forEach((el) => el.remove());
+      content.querySelectorAll(selector).forEach((el) => el.remove());
     }
 
     return content.outerHtml;

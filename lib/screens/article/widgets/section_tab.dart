@@ -50,6 +50,14 @@ class _SectionTabState extends State<SectionTab> {
       }
 
       final feed = await _articleService.fetchFeed(url);
+      
+      for (var item in feed.items!) {
+        if (item.link != null) {
+          final cleanContent = _articleService.getCleanContent(item.link!);
+          //print('Article: ${item.title}');
+         // print('Contenu nettoyé: $cleanContent');
+        }
+      }
 
       if (!mounted) return;
 
